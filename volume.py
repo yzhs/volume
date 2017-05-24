@@ -62,11 +62,17 @@ def print_result(result, use_gui=False):
         print(result[0], mute)
 
 
+gui = False
 result = None
 args = sys.argv[1:]
-if len(args) == 0:
+if len(args) == 0 or (len(args) == 1 and args[0] == "-x"):
+    if len(args) > 0:
+        gui = True
     result = amixer("get")
-elif len(args) == 1:
+elif len(args) >= 1:
+    if len(args) > 1 and args[0] == "-x":
+        gui = True
+        args = args[1:]
     result = handle_one_arg(args[0])
 
 print_result(result, gui)
