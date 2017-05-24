@@ -1,26 +1,48 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
-from subprocess import call
+from subprocess import run, PIPE
 
 mixer = "Master"
 
-def call_amixer(cmd, args, silent=False):
-    if silent:
-        call(["amixer", "-q", cmd] + list(args))
-    else:
-        call(["amixer", cmd] + list(args))
 
+def amixer(command, mixer=mixer, silent=False):
+    """Execute a command using amixer."""
+    cmd = None
+    if command == "get":
+        cmd = ["amixer", "get", mixer]
+    else:
+        cmd = ["amixer", "set", mixer, command]
+        if silent:
+            cmd.insert(1, "-q")
+    output = run(cmd)
+
+
+def handle_one_arg(arg):
+    """Handle any of the arguments related to setting or getting the
+    volume."""
+    if arg == "toggle" or arg == "unmute":
+        result = amixer(arg)
+        # Work around a bug (?) in PulseAudio
+        amixer("unmute", "Headphone", silent=True)
+        amixer("unmute", "Speaker", silent=True)
+    elif arg == "mute" or arg[0] in "1234567890":
+        amixer(arg)
+    elif arg[0] in "+-":
+        amixer(arg[1:] + arg[0])
+
+
+def print_result(result):
+    if result is None:
+        return
+
+    print(result[0]+",", result[1])
+
+
+result = None
 args = sys.argv[1:]
 if len(args) == 0:
-    call_amixer("get", ["Master"])
+    amixer("get")
 elif len(args) == 1:
-    if args[0] == "toggle":
-        call_amixer("set", ["Master", "toggle"])
-        call_amixer("set", ["Headphone", "unmute"], silent=True)
-        call_amixer("set", ["Speaker", "unmute"], silent=True)
-    elif args[0][0] in "1234567890":
-        call_amixer("set", ["Master", args[0]])
-    elif args[0][0] in "+-":
-        call_amixer("set", ["Master", args[0][1:] + args[0][0]])
+    handle_one_arg(args[0])
 
