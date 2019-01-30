@@ -53,11 +53,11 @@ def print_result(result, use_gui=False):
 
     mute = result[1]
     if use_gui and mute == "on":
-        mute = "<fn=1></fn>"
+        mute = "<fc=#00aa00><fn=1></fn></fc>"
     elif use_gui and mute == "off":
-        mute = "<fn=1></fn> "
+        mute = "<fc=red><fn=1></fn></fc> "
     if use_gui:
-        print("<fc=#cccc00>{}{}</fc>".format(mute, result[0]))
+        print(mute + result[0])
     else:
         print(result[0], mute)
 
