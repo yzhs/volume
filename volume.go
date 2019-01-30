@@ -10,7 +10,7 @@ import (
 const mixer = "Master"
 
 func main() {
-	var vol, muted string
+	var output string
 
 	gui := false
 	args := os.Args[1:]
@@ -19,7 +19,7 @@ func main() {
 		if len(args) > 0 {
 			gui = true
 		}
-		vol, muted = call_amixer("get", mixer, false, true)
+		output = call_amixer("get", mixer, false)
 	} else if len(args) >= 1 {
 		if len(args) > 1 && args[0] == "-x" {
 			gui = true
@@ -29,43 +29,44 @@ func main() {
 		arg := args[0]
 
 		if arg == "toggle" || arg == "unmute" {
-			vol, muted = call_amixer(arg, mixer, false, true)
+			output = call_amixer(arg, mixer, false)
 			// Work around a bug (?) in PulseAudio
-			call_amixer("unmute", "Headphone", true, false)
-			call_amixer("unmute", "Speaker", true, false)
+			call_amixer("unmute", "Headphone", true)
+			call_amixer("unmute", "Speaker", true)
 		} else if arg == "mute" || strings.IndexByte("1234567890", arg[0]) != -1 {
-			vol, muted = call_amixer(arg, mixer, false, true)
+			output = call_amixer(arg, mixer, false)
 		} else if arg[0] == '-' || arg[0] == '+' {
-			vol, muted = call_amixer(arg[1:]+arg[:1], mixer, false, true)
+			output = call_amixer(arg[1:]+arg[:1], mixer, false)
 		}
 	}
+
+	vol, muted := parse_output(output)
 
 	print_result(vol, muted, gui)
 }
 
-// Execute a command using amixer.
-func call_amixer(command string, mixer string, silent, need_output bool) (volume, mute string) {
+func call_amixer(command string, mixer string, silent bool) string {
 	arg := ""
 	if silent {
 		arg = "-q"
 	}
-	cmd := "set"
+
+	var cmd string
 	if command == "get" {
-		cmd = command
+		cmd = "get"
+	} else {
+		cmd = "set"
 	}
-	fmt.Println("amixer", cmd, mixer, command, arg)
+
 	tmp, err := exec.Command("amixer", cmd, mixer, command, arg).CombinedOutput()
 	if err != nil {
 		panic(err)
 	}
 
-	if !need_output {
-		return "", ""
-	}
+	return string(tmp)
+}
 
-	output := string(tmp)
-
-	// Parse output
+func parse_output(output string) (volume, mute string) {
 	pattern := "Mono: Playback "
 	i := strings.Index(output, pattern) + len(pattern)
 	output = output[i:]
