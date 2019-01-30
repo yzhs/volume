@@ -10,46 +10,54 @@ import (
 const mixer = "Master"
 
 func main() {
-	var output string
+	arg, unmute, gui := ParseArguments(os.Args[1:])
 
-	gui := len(args) > 0 && args[0] == "-x"
-	args := os.Args[1:]
+	output := CallAmixer(arg, mixer)
 
-	if len(args) == 0 || (len(args) == 1 && args[0] == "-x") {
-		output = call_amixer("get", mixer)
-	} else if len(args) >= 1 {
-		if len(args) > 1 && args[0] == "-x" {
-			args = args[1:]
-		}
-
-		arg := args[0]
-
-		if arg == "toggle" || arg == "unmute" {
-			output = call_amixer(arg, mixer)
-			// Work around a bug (?) in PulseAudio
-			call_amixer_quiet("unmute", "Headphone")
-			call_amixer_quiet("unmute", "Speaker")
-		} else if arg == "mute" || strings.IndexByte("1234567890", arg[0]) != -1 {
-			output = call_amixer(arg, mixer)
-		} else if arg[0] == '-' || arg[0] == '+' {
-			output = call_amixer(arg[1:]+arg[:1], mixer)
-		}
+	if unmute {
+		unmuteIndividualOutputs()
 	}
 
-	vol, muted := parse_output(output)
+	vol, muted := ParseOutput(output)
 
-	print_result(vol, muted, gui)
+	PrintResult(vol, muted, gui)
 }
 
-func call_amixer(command, mixer string) string {
-	return call_amixer_helper(command, mixer, false)
+// Parse command line arguments
+func ParseArguments(args []string) (arg string, unmute, gui bool) {
+	gui = len(args) > 0 && args[0] == "-x"
+	if gui {
+		args = args[1:]
+	}
+
+	arg = "get"
+	if len(args) > 0 {
+		arg = args[0]
+	}
+
+	switch {
+	case arg == "toggle", arg == "unmute":
+		unmute = true
+	case arg[0] == '-' || arg[0] == '+':
+		arg = arg[1:] + arg[:1]
+	case arg == "get" || arg == "mute" || '0' <= arg[0] && arg[0] <= '9':
+	default:
+		panic("Unknown argument")
+	}
+
+	return arg, unmute, gui
 }
 
-func call_amixer_quiet(command, mixer string) {
-	call_amixer_helper(command, mixer, true)
+// Execute `amixer (get|set) <mixer> ...`,
+func CallAmixer(command, mixer string) string {
+	return callAmixerHelper(command, mixer, false)
 }
 
-func call_amixer_helper(command, mixer string, silent bool) string {
+func callAmixerQuiet(command, mixer string) {
+	callAmixerHelper(command, mixer, true)
+}
+
+func callAmixerHelper(command, mixer string, silent bool) string {
 	arg := ""
 	if silent {
 		arg = "-q"
@@ -68,10 +76,13 @@ func call_amixer_helper(command, mixer string, silent bool) string {
 	return string(tmp)
 }
 
-func parse_output(output string) (volume, mute string) {
+func ParseOutput(output string) (volume, mute string) {
 	pattern := "Mono: Playback "
-	i := strings.Index(output, pattern) + len(pattern)
-	output = output[i:]
+	i := strings.Index(output, pattern)
+	if i == -1 {
+		panic(output)
+	}
+	output = output[i+len(pattern):]
 	i = strings.IndexRune(output, ' ')
 	volume = output[:i]
 	output = output[i:]
@@ -83,15 +94,21 @@ func parse_output(output string) (volume, mute string) {
 	return volume, mute
 }
 
-func print_result(volume, mute string, use_gui bool) {
-	if use_gui && mute == "on" {
+func PrintResult(volume, mute string, useGui bool) {
+	if useGui && mute == "on" {
 		mute = "<fc=#00aa00><fn=1></fn></fc>"
-	} else if use_gui && mute == "off" {
+	} else if useGui && mute == "off" {
 		mute = "<fc=red><fn=1></fn></fc> "
 	}
-	if use_gui {
+	if useGui {
 		println(mute, volume)
 	} else {
 		fmt.Printf("%s %s\n", volume, mute)
 	}
+}
+
+func unmuteIndividualOutputs() {
+	// Work around a bug (?) in PulseAudio
+	callAmixerQuiet("unmute", "Headphone")
+	callAmixerQuiet("unmute", "Speaker")
 }
