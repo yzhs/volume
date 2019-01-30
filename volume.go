@@ -19,7 +19,7 @@ func main() {
 		if len(args) > 0 {
 			gui = true
 		}
-		output = call_amixer("get", mixer, false)
+		output = call_amixer("get", mixer)
 	} else if len(args) >= 1 {
 		if len(args) > 1 && args[0] == "-x" {
 			gui = true
@@ -29,14 +29,14 @@ func main() {
 		arg := args[0]
 
 		if arg == "toggle" || arg == "unmute" {
-			output = call_amixer(arg, mixer, false)
+			output = call_amixer(arg, mixer)
 			// Work around a bug (?) in PulseAudio
-			call_amixer("unmute", "Headphone", true)
-			call_amixer("unmute", "Speaker", true)
+			call_amixer_quiet("unmute", "Headphone")
+			call_amixer_quiet("unmute", "Speaker")
 		} else if arg == "mute" || strings.IndexByte("1234567890", arg[0]) != -1 {
-			output = call_amixer(arg, mixer, false)
+			output = call_amixer(arg, mixer)
 		} else if arg[0] == '-' || arg[0] == '+' {
-			output = call_amixer(arg[1:]+arg[:1], mixer, false)
+			output = call_amixer(arg[1:]+arg[:1], mixer)
 		}
 	}
 
@@ -45,7 +45,15 @@ func main() {
 	print_result(vol, muted, gui)
 }
 
-func call_amixer(command string, mixer string, silent bool) string {
+func call_amixer(command, mixer string) string {
+	return call_amixer_helper(command, mixer, false)
+}
+
+func call_amixer_quiet(command, mixer string) {
+	call_amixer_helper(command, mixer, true)
+}
+
+func call_amixer_helper(command, mixer string, silent bool) string {
 	arg := ""
 	if silent {
 		arg = "-q"
