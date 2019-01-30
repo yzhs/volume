@@ -10,21 +10,20 @@ import (
 const mixer = "Master"
 
 func main() {
-	arg, unmute, gui := ParseArguments(os.Args[1:])
+	arg, unmute, gui := parseArguments(os.Args[1:])
 
-	output := CallAmixer(arg, mixer)
+	output := callAmixer(arg, mixer)
 
 	if unmute {
 		unmuteIndividualOutputs()
 	}
 
-	vol, muted := ParseOutput(output)
+	vol, muted := parseOutput(output)
 
-	PrintResult(vol, muted, gui)
+	printResult(vol, muted, gui)
 }
 
-// Parse command line arguments
-func ParseArguments(args []string) (arg string, unmute, gui bool) {
+func parseArguments(args []string) (arg string, unmute, gui bool) {
 	gui = len(args) > 0 && args[0] == "-x"
 	if gui {
 		args = args[1:]
@@ -48,8 +47,7 @@ func ParseArguments(args []string) (arg string, unmute, gui bool) {
 	return arg, unmute, gui
 }
 
-// Execute `amixer (get|set) <mixer> ...`,
-func CallAmixer(command, mixer string) string {
+func callAmixer(command, mixer string) string {
 	return callAmixerHelper(command, mixer, false)
 }
 
@@ -76,7 +74,7 @@ func callAmixerHelper(command, mixer string, silent bool) string {
 	return string(tmp)
 }
 
-func ParseOutput(output string) (volume, mute string) {
+func parseOutput(output string) (volume, mute string) {
 	pattern := "Mono: Playback "
 	i := strings.Index(output, pattern)
 	if i == -1 {
@@ -94,7 +92,7 @@ func ParseOutput(output string) (volume, mute string) {
 	return volume, mute
 }
 
-func PrintResult(volume, mute string, useGui bool) {
+func printResult(volume, mute string, useGui bool) {
 	if useGui && mute == "on" {
 		mute = "<fc=#00aa00><fn=1></fn></fc>"
 	} else if useGui && mute == "off" {
