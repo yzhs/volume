@@ -12,17 +12,13 @@ const mixer = "Master"
 func main() {
 	var output string
 
-	gui := false
+	gui := len(args) > 0 && args[0] == "-x"
 	args := os.Args[1:]
 
 	if len(args) == 0 || (len(args) == 1 && args[0] == "-x") {
-		if len(args) > 0 {
-			gui = true
-		}
 		output = call_amixer("get", mixer)
 	} else if len(args) >= 1 {
 		if len(args) > 1 && args[0] == "-x" {
-			gui = true
 			args = args[1:]
 		}
 
