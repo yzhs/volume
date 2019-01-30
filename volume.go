@@ -59,10 +59,8 @@ func call_amixer_helper(command, mixer string, silent bool) string {
 		arg = "-q"
 	}
 
-	var cmd string
-	if command == "get" {
-		cmd = "get"
-	} else {
+	cmd := command
+	if cmd != "get" {
 		cmd = "set"
 	}
 
