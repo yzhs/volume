@@ -99,9 +99,9 @@ func printResult(volume, mute string, useGui bool) {
 		mute = "<fc=red><fn=1></fn></fc> "
 	}
 	if useGui {
-		println(mute, volume)
+		fmt.Println(mute, volume)
 	} else {
-		fmt.Printf("%s %s\n", volume, mute)
+		fmt.Println(volume, mute)
 	}
 }
 
