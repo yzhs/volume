@@ -101,7 +101,7 @@ func printResult(volume, mute string, useGui bool) {
 	if useGui {
 		fmt.Printf("%s%s\n", mute, volume)
 	} else {
-		fmt.Printf("%s%s\n", volume, mute)
+		fmt.Println(volume, mute)
 	}
 }
 
