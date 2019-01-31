@@ -139,3 +139,43 @@ func TestParseArgumentsFailure(t *testing.T) {
 
 	parseArguments([]string{"foo"})
 }
+
+func TestParseOutputUnmutedVolume(t *testing.T) {
+	output := "Simple mixer control 'Master',0\n  Capabilities: pvolume pvolume-joined pswitch pswitch-joined\n  Playback channels: Mono\n  Limits: Playback 0 - 74\n  Mono: Playback 58 [78%] [-16.00dB] [on]"
+
+	volume, muted := parseOutput(output)
+
+	if volume != "58" {
+		t.Fail()
+	}
+
+	if muted != "on" {
+		t.Fail()
+	}
+}
+
+func TestParseOutputmuteddVolume(t *testing.T) {
+	output := "Simple mixer control 'Master',0\n  Capabilities: pvolume pvolume-joined pswitch pswitch-joined\n  Playback channels: Mono\n  Limits: Playback 0 - 74\n  Mono: Playback 58 [78%] [-16.00dB] [off]"
+
+	volume, muted := parseOutput(output)
+
+	if volume != "58" {
+		t.Fail()
+	}
+
+	if muted != "off" {
+		t.Fail()
+	}
+}
+
+func TestParseOutputStereo(t *testing.T) {
+	output := "Simple mixer control 'Headphone',0\n  Capabilities: pvolume pswitch\n  Playback channels: Front Left - Front Right\n  Limits: Playback 0 - 74\n  Mono:\n  Front Left: Playback 72 [100%] [0.00dB] [on]\n  Front Right: Playback 73 [100%] [0.00dB] [off]"
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+
+	parseOutput(output)
+}
