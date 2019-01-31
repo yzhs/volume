@@ -93,12 +93,12 @@ func parseOutput(output string) (volume, mute string) {
 }
 
 func printResult(volume, mute string, useGui bool) {
-	if useGui && mute == "on" {
-		mute = "<fc=#00aa00><fn=1></fn></fc>"
-	} else if useGui && mute == "off" {
-		mute = "<fc=red><fn=1></fn></fc> "
-	}
 	if useGui {
+		if mute == "on" {
+			mute = "<fc=#00aa00><fn=1></fn></fc>"
+		} else if mute == "off" {
+			mute = "<fc=red><fn=1></fn></fc> "
+		}
 		fmt.Printf("%s%s\n", mute, volume)
 	} else {
 		fmt.Println(volume, mute)
